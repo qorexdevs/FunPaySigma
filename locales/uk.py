@@ -211,7 +211,7 @@ about = """<b>🤖 FunPay Sigma v{}</b>
 
 👨‍💻 <b>Розробники:</b> @qorexdev, @sidor0912
 💬 <b>Чат:</b> @FunPaySigmaChat
-🔗 <b>Репозиторій:</b> github.com/qorexdev/FunPaySigma"""
+🔗 <b>Репозиторій:</b> github.com/qorexdevs/FunPaySigma"""
 
 sys_info = """<b><u>Дані системи</u></b>
 
@@ -521,7 +521,7 @@ activity_info = """📊 <b>FunPay Sigma — Статус</b>
 👀 <b>Слідкують:</b> <code>{}</code>
 
 💬 <b>Чат:</b> @FunPaySigmaChat
-🐙 <b>GitHub:</b> github.com/qorexdev/FunPaySigma"""
+🐙 <b>GitHub:</b> github.com/qorexdevs/FunPaySigma"""
 
 activity_error = "❌ Не вдалося отримати статистику проекту."
 

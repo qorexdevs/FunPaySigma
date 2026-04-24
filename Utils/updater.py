@@ -84,7 +84,7 @@ def get_latest_release(max_retries: int = 3) -> Release | None:
 
     for attempt in range(max_retries):
         try:
-            response = requests.get("https://api.github.com/repos/qorexdev/FunPaySigma/releases/latest",
+            response = requests.get("https://api.github.com/repos/qorexdevs/FunPaySigma/releases/latest",
                                     headers=HEADERS, timeout=15)
 
             if response.status_code == 403:

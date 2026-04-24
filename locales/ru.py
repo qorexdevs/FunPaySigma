@@ -360,7 +360,7 @@ about = """✨ <b>FunPay Sigma</b> <code>v{}</code>
 
 👨‍💻 <b>Разрабы:</b> @qorexdev, @sidor0912
 💬 <b>Чат:</b> @FunPaySigmaChat
-🐙 <b>GitHub:</b> github.com/qorexdev/FunPaySigma"""
+🐙 <b>GitHub:</b> github.com/qorexdevs/FunPaySigma"""
 
 sys_info = """📊 <b>Что по железу:</b>
 
@@ -670,7 +670,7 @@ activity_info = """📊 <b>FunPay Sigma — Status</b>
 👀 <b>Следят:</b> <code>{}</code>
 
 💬 <b>Чат:</b> @FunPaySigmaChat
-🐙 <b>GitHub:</b> github.com/qorexdev/FunPaySigma"""
+🐙 <b>GitHub:</b> github.com/qorexdevs/FunPaySigma"""
 
 activity_error = "❌ Не удалось получить статистику проекта."
 

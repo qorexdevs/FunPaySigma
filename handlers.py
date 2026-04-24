@@ -225,9 +225,8 @@ def _find_ar_command(c: Cardinal, text: str) -> str | None:
             return section
     return None
 
-
 def discount_handler(c: Cardinal, e: NewMessageEvent | LastChatMessageChangedEvent):
-    """Обработчик команды скидки в чатах FunPay."""
+
     if not c.MAIN_CFG.has_section("AutoDiscount"):
         return
     if not c.MAIN_CFG["AutoDiscount"].getboolean("enabled", fallback=False):
@@ -265,7 +264,6 @@ def discount_handler(c: Cardinal, e: NewMessageEvent | LastChatMessageChangedEve
             c.send_message(chat_id, result, chat_name)
 
     Thread(target=_apply, daemon=True).start()
-
 
 def send_response_handler(c: Cardinal, e: NewMessageEvent | LastChatMessageChangedEvent):
 

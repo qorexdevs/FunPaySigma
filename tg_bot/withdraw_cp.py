@@ -1,7 +1,3 @@
-"""
-Встроенный модуль FunPay Sigma — Вывод средств
-Страница 💰 Вывод доступна в меню MAIN3.
-"""
 from __future__ import annotations
 import datetime
 import logging
@@ -20,18 +16,13 @@ from tg_bot import CBT
 
 logger = logging.getLogger("FPC.withdraw_cp")
 
-# ── CBT-ключи ─────────────────────────────────────────────────────────────────
-WD_MENU        = "wd.menu"          # главная страница вывода
-WD_WALLET      = "wd.wallet:"       # выбор кошелька  (+ idx)
-WD_CANCEL      = "wd.cancel"        # отмена
-WD_CONFIRM     = "wd.confirm"       # подтверждение вывода
-WD_STATE_INPUT = "wd_amount_input"  # state для ввода суммы
+WD_MENU        = "wd.menu"
+WD_WALLET      = "wd.wallet:"
+WD_CANCEL      = "wd.cancel"
+WD_CONFIRM     = "wd.confirm"
+WD_STATE_INPUT = "wd_amount_input"
 
-# ── Временное состояние {chat_id: {...}} ──────────────────────────────────────
 _state: dict = {}
-
-
-# ── Вспомогательные функции ───────────────────────────────────────────────────
 
 def _balance_text(balance) -> str:
     return (
@@ -44,20 +35,15 @@ def _balance_text(balance) -> str:
         f"  <i>(всего {balance.total_eur:.2f})</i>"
     )
 
-
 def _mask(wallet) -> str:
-    """Маскирует данные кошелька для отображения."""
+
     d = wallet.data
     if wallet.is_masked:
         return d
     return f"{d[:4]}••••{d[-4:]}" if len(d) > 8 else d
 
-
 def _calc_preview(cardinal: "Cardinal", wallet, amount: float):
-    """
-    Делает запрос preview=1 к withdraw/withdraw.
-    Возвращает (amount_ext, ok: bool).
-    """
+
     try:
         headers = {
             "accept": "*/*",
@@ -78,9 +64,6 @@ def _calc_preview(cardinal: "Cardinal", wallet, amount: float):
         logger.warning(f"[WITHDRAW] preview failed: {e}")
         return amount, False
 
-
-# ── Страница вывода ───────────────────────────────────────────────────────────
-
 def init_withdraw_cp(cardinal: "Cardinal", *args):
     if not cardinal.telegram:
         return
@@ -88,13 +71,8 @@ def init_withdraw_cp(cardinal: "Cardinal", *args):
     tg  = cardinal.telegram
     bot = tg.bot
 
-    # ── /withdraw  +  кнопка из меню ─────────────────────────────────────────
-
     def _open_menu(chat_id: int, message_id: int | None, edit: bool = True):
-        """
-        Показывает главную страницу вывода.
-        edit=True → редактируем сообщение, edit=False → отправляем новое.
-        """
+
         try:
             balance = cardinal.get_balance() or cardinal.balance
             wallets = cardinal.account.get_wallets()
@@ -116,7 +94,6 @@ def init_withdraw_cp(cardinal: "Cardinal", *args):
                 bot.send_message(chat_id, text, parse_mode="HTML", reply_markup=kb)
             return
 
-        # Сохраняем данные в состоянии
         _state[chat_id] = {"wallets": wallets, "balance": balance}
 
         text = (
@@ -159,8 +136,6 @@ def init_withdraw_cp(cardinal: "Cardinal", *args):
     def cmd_withdraw(m: Message):
         _open_menu(m.chat.id, None, edit=False)
 
-    # ── Выбор кошелька ────────────────────────────────────────────────────────
-
     def select_wallet(c: CallbackQuery):
         idx   = int(c.data.replace(WD_WALLET, ""))
         state = _state.get(c.message.chat.id)
@@ -193,8 +168,6 @@ def init_withdraw_cp(cardinal: "Cardinal", *args):
         )
         bot.answer_callback_query(c.id)
 
-    # ── Ввод суммы ────────────────────────────────────────────────────────────
-
     def amount_input(m: Message):
         tg.clear_state(m.chat.id, m.from_user.id)
         state = _state.get(m.chat.id)
@@ -202,7 +175,6 @@ def init_withdraw_cp(cardinal: "Cardinal", *args):
             bot.send_message(m.chat.id, "❌ Сессия устарела. Запустите /withdraw заново.")
             return
 
-        # Парсим сумму
         try:
             amount = float(m.text.replace(",", ".").strip())
             if amount <= 0:
@@ -220,7 +192,6 @@ def init_withdraw_cp(cardinal: "Cardinal", *args):
         label  = wallet.type_text or wallet.type_id
         masked = _mask(wallet)
 
-        # Предпросмотр комиссии
         amount_ext, preview_ok = _calc_preview(cardinal, wallet, amount)
         commission = round(amount - amount_ext, 2) if amount_ext < amount else 0.0
 
@@ -253,8 +224,6 @@ def init_withdraw_cp(cardinal: "Cardinal", *args):
             parse_mode="HTML",
             reply_markup=kb,
         )
-
-    # ── Подтверждение ─────────────────────────────────────────────────────────
 
     def confirm_withdraw(c: CallbackQuery):
         state = _state.get(c.message.chat.id)
@@ -327,8 +296,6 @@ def init_withdraw_cp(cardinal: "Cardinal", *args):
                 reply_markup=kb,
             )
 
-    # ── Отмена ────────────────────────────────────────────────────────────────
-
     def cancel_withdraw(c: CallbackQuery):
         _state.pop(c.message.chat.id, None)
         tg.clear_state(c.message.chat.id, c.from_user.id)
@@ -339,8 +306,6 @@ def init_withdraw_cp(cardinal: "Cardinal", *args):
             reply_markup=K().add(B("◀️ Назад", callback_data=CBT.MAIN3)),
         )
         bot.answer_callback_query(c.id)
-
-    # ── Регистрация хэндлеров ─────────────────────────────────────────────────
 
     tg.msg_handler(cmd_withdraw, commands=["withdraw"])
 
@@ -353,6 +318,5 @@ def init_withdraw_cp(cardinal: "Cardinal", *args):
         amount_input,
         func=lambda m: tg.check_state(m.chat.id, m.from_user.id, WD_STATE_INPUT),
     )
-
 
 BIND_TO_PRE_INIT = [init_withdraw_cp]

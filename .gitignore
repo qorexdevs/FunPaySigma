@@ -27,3 +27,4 @@ dist/
 /locales copy old
 /starvellsigma
 /starvellbot
+/configsexample/*.cfg

@@ -737,7 +737,7 @@ def category_fields_keyboard(lot_fields, offset: int) -> K:
 def LINKS_KB(language: str = "ru") -> K:
     kb = K()
     btns = [
-        B(_("lnk_github", language=language), url="https://github.com/qorexdev/FunPaySigma"),
+        B(_("lnk_github", language=language), url="https://github.com/qorexdevs/FunPaySigma"),
         B(_("lnk_chat", language=language), url="https://t.me/FunPaySigmaChat")
     ]
     kb.add(*btns)

@@ -842,9 +842,7 @@ class CalcResult:
 
         return (self.commission_coefficient - 1) * 100
 
-
 class Wallet:
-    """Класс, описывающий кошелёк со страницы https://funpay.com/account/wallets"""
 
     def __init__(self, type_id: str, data: str, data_n: int | None = None,
                  detail_id: int | None = None, is_masked: bool = False, type_text: str | None = None):

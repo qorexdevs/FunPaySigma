@@ -295,7 +295,7 @@ class Cardinal(object):
         return subcategory_name in self.muted_notification_categories
 
     def apply_discount(self, lot_id: int, chat_id: int, chat_name: str) -> str | None:
-        """Применяет скидку к лоту. Возвращает текст ответа или None при ошибке."""
+
         cfg = self.MAIN_CFG["AutoDiscount"]
         percent = cfg.getfloat("discountPercent", fallback=5.0)
         duration = cfg.getint("durationMinutes", fallback=10)
@@ -366,7 +366,7 @@ class Cardinal(object):
         return f"✅ Скидка {percent}% активирована! Цена: {original_price} → {new_price}. Действует {duration} мин."
 
     def _restore_price(self, lot_id: int) -> None:
-        """Восстанавливает оригинальную цену лота после истечения скидки."""
+
         info = self.active_discounts.pop(lot_id, None)
         if not info:
             return
@@ -392,7 +392,7 @@ class Cardinal(object):
                 pass
 
     def cancel_all_discounts(self) -> int:
-        """Отменяет все активные скидки, возвращает количество отменённых."""
+
         count = 0
         lot_ids = list(self.active_discounts.keys())
         for lot_id in lot_ids:

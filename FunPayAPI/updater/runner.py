@@ -34,7 +34,6 @@ class Runner:
         self.__last_order_event_tag = utils.random_tag()
 
         self.saved_orders: dict[str, types.OrderShortcut] | None = None
-        """Сохраненные состояния заказов ({ID заказа: экземпляр types.OrderShortcut})."""
 
         self.runner_last_messages: dict[int, list[int, int, str | None]] = {}
 
@@ -43,18 +42,14 @@ class Runner:
         self.last_messages_ids: dict[int, int] = {}
 
         self.chat_node_tags: dict[int, str] = {}
-        """Теги прочитанных чатов ({ID чата: тег})"""
 
         self.users_ids: dict[int, int] = {}
-        """ID чата - ID собеседника"""
 
         self.buyers_viewing: dict[int, types.BuyerViewing] = {}
 
         self.runner_len: int = 10
-        """Количество событий, на которое успешно отвечает funpay.com/runner/"""
 
         self.__chat_nodes: dict = {}
-        """Кэш узлов чатов для оптимизации запросов"""
 
         self.account: Account = account
 
@@ -184,7 +179,6 @@ class Runner:
                 lcmc_events_with_new_mess.append(lcmc_event)
         events.extend(lcmc_events_without_new_mess)
 
-        # Чаты, уже загруженные в кэш — обрабатываем без нового запроса
         if lcmc_events_with_chat_node:
             chats_data = {i.chat.id: i.chat.name for i in lcmc_events_with_chat_node}
             chats = [self.__chat_nodes.pop(i.chat.id, ({}, -1))[0] for i in lcmc_events_with_chat_node]

@@ -5,7 +5,7 @@ from typing import Optional
 
 logger = logging.getLogger("FPS.activity")
 
-GITHUB_API = "https://api.github.com/repos/qorexdev/FunPaySigma"
+GITHUB_API = "https://api.github.com/repos/qorexdevs/FunPaySigma"
 
 _start_time = int(time.time())
 _cached_stats = None

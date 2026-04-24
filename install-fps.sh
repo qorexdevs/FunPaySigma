@@ -21,7 +21,7 @@ clear
 echo -e "\\033[1;95m${logo}${RESET}"
 
 
-echo -e "\n\n${RED} * GitHub ${CYAN}github.com/qorexdev/FunPaySigma${RESET}"
+echo -e "\n\n${RED} * GitHub ${CYAN}github.com/qorexdevs/FunPaySigma${RESET}"
 echo -e "${RED} * Telegram ${CYAN}t.me/FunPaySigmaChat${RESET}"
 echo -e "\n\n\n"
 
@@ -223,7 +223,7 @@ if ! sudo mkdir /home/$username/fps-install ; then
   exit 2
 fi
 
-gh_repo="qorexdev/FunPaySigma"
+gh_repo="qorexdevs/FunPaySigma"
 LOCATION=$(curl -sS https://api.github.com/repos/$gh_repo/releases/latest | grep "zipball_url" | awk '{ print $2 }' | sed 's/,$//' | sed 's/"//g' )
 
 #14
@@ -303,7 +303,7 @@ esac
 
 clear
 echo -e "\033[1;95m${logo}${RESET}"
-echo -e '\n\n\e[1;91m * GitHub \e[1;96mgithub.com/qorexdev/FunPaySigma\e[0m'
+echo -e '\n\n\e[1;91m * GitHub \e[1;96mgithub.com/qorexdevs/FunPaySigma\e[0m'
 echo -e '\e[1;91m * Telegram \e[1;96mt.me/FunPaySigmaChat\e[0m'
 
 echo -e "\n\n\e[1;92m################################################################################"
@@ -320,7 +320,7 @@ sudo systemctl start FunPaySigma@$username.service
 
 clear
 echo -e "\033[1;95m${logo}${RESET}"
-echo -e '\n\n\e[1;91m * GitHub \e[1;96mgithub.com/qorexdev/FunPaySigma\e[0m'
+echo -e '\n\n\e[1;91m * GitHub \e[1;96mgithub.com/qorexdevs/FunPaySigma\e[0m'
 echo -e '\e[1;91m * Telegram \e[1;96mt.me/FunPaySigmaChat\e[0m'
 
 echo -e "\n\n\e[1;92m################################################################################"

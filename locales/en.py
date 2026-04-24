@@ -211,7 +211,7 @@ about = """<b>🤖 FunPay Sigma v{}</b>
 
 👨‍💻 <b>Developers:</b> @qorexdev, @sidor0912
 💬 <b>Chat:</b> @FunPaySigmaChat
-🔗 <b>Repository:</b> github.com/qorexdev/FunPaySigma"""
+🔗 <b>Repository:</b> github.com/qorexdevs/FunPaySigma"""
 
 sys_info = """<b><u>Data summary</u></b>
 
@@ -519,7 +519,7 @@ activity_info = """📊 <b>FunPay Sigma — Status</b>
 👀 <b>Watchers:</b> <code>{}</code>
 
 💬 <b>Chat:</b> @FunPaySigmaChat
-🐙 <b>GitHub:</b> github.com/qorexdev/FunPaySigma"""
+🐙 <b>GitHub:</b> github.com/qorexdevs/FunPaySigma"""
 
 activity_error = "❌ Failed to get project stats."
 

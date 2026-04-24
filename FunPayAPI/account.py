@@ -835,7 +835,7 @@ class Account:
         return float(json_response.get("amount_ext"))
 
     def get_wallets(self) -> list[types.Wallet]:
-        """Получение сохранённых кошельков со страницы https://funpay.com/account/wallets"""
+
         if not self.is_initiated:
             raise exceptions.AccountNotInitiatedError()
         response = self.method("get", "account/wallets", {}, {}, raise_not_200=True)
@@ -856,7 +856,7 @@ class Account:
         return result
 
     def save_wallets(self, wallets: list[types.Wallet]):
-        """Сохранение кошельков на странице https://funpay.com/account/wallets"""
+
         if not self.is_initiated:
             raise exceptions.AccountNotInitiatedError()
         payload = {"csrf_token": self.csrf_token, "cat_id": "wallets"}

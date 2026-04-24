@@ -611,7 +611,7 @@ class TGBot:
         self.act_mute_categories(c.message)
 
     def act_discount(self, m: Message):
-        """Управление автоскидкой."""
+
         cfg = self.cardinal.MAIN_CFG
         if not cfg.has_section("AutoDiscount"):
             self.bot.send_message(m.chat.id, "❌ Секция AutoDiscount не найдена в конфиге.")

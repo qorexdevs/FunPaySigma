@@ -3,7 +3,7 @@
 # ⚡ FunPay Sigma
 
 [![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![Version](https://img.shields.io/badge/Версия-2.11.1-4FC3F7?style=for-the-badge)](https://github.com/qorexdev/FunPaySigma/releases)
+[![Version](https://img.shields.io/badge/Версия-2.11.1-4FC3F7?style=for-the-badge)](https://github.com/qorexdevs/FunPaySigma/releases)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 [![Telegram](https://img.shields.io/badge/Telegram-Чат-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/FunPaySigmaChat)
 [![Plugins](https://img.shields.io/badge/Плагины-Каталог-orange?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/fps_plugins)
@@ -170,7 +170,7 @@
 Одна команда — скрипт сам установит Python, зависимости и настроит systemd-сервис с автозапуском:
 
 ```bash
-wget https://raw.githubusercontent.com/qorexdev/FunPaySigma/refs/heads/master/install-fps.sh -O install-fps.sh && bash install-fps.sh
+wget https://raw.githubusercontent.com/qorexdevs/FunPaySigma/refs/heads/master/install-fps.sh -O install-fps.sh && bash install-fps.sh
 ```
 
 **Что делает скрипт:**
@@ -194,7 +194,7 @@ journalctl -u    FunPaySigma@$USER   # логи
 
 1. Установите [Python 3.11](https://www.python.org/ftp/python/3.11.0/python-3.11.0-amd64.exe)
    > ❗ При установке обязательно отметьте **`Add python.exe to PATH`**
-2. Скачайте архив [последнего релиза](https://github.com/qorexdev/FunPaySigma/releases)
+2. Скачайте архив [последнего релиза](https://github.com/qorexdevs/FunPaySigma/releases)
 3. Распакуйте в удобную папку
 4. Запустите `Setup.bat` — установит зависимости
 5. Запустите `Start.bat` — бот начнёт первичную настройку
@@ -224,7 +224,7 @@ journalctl -u    FunPaySigma@$USER   # логи
 | Роль | Контакт |
 | :--- | :--- |
 | 👤 Автор оригинального Cardinal | [@sidor0912](https://github.com/sidor0912) |
-| 🛠 Разработчик FunPay Sigma | [@qorexdev](https://github.com/qorexdev) |
+| 🛠 Разработчик FunPay Sigma | [@qorexdev](https://github.com/qorexdevs) |
 
 Все права на оригинальный код принадлежат [@sidor0912](https://github.com/sidor0912).
 
@@ -235,7 +235,7 @@ journalctl -u    FunPaySigma@$USER   # логи
 Нашли баг? Есть идея? Нужна помощь с настройкой?
 
 - 💬 **[Telegram-чат сообщества](https://t.me/FunPaySigmaChat)** — помощь, конфиги, обсуждение
-- 🐛 **[Issues на GitHub](https://github.com/qorexdev/FunPaySigma/issues)** — баг-репорты и предложения
+- 🐛 **[Issues на GitHub](https://github.com/qorexdevs/FunPaySigma/issues)** — баг-репорты и предложения
 
 ---
 
@@ -243,6 +243,6 @@ journalctl -u    FunPaySigma@$USER   # логи
 
 **Нравится проект? Поддержите звездой — это помогает развитию! ⭐**
 
-[![Star History Chart](https://img.shields.io/github/stars/qorexdev/FunPaySigma?style=social)](https://github.com/qorexdev/FunPaySigma)
+[![Star History Chart](https://img.shields.io/github/stars/qorexdevs/FunPaySigma?style=social)](https://github.com/qorexdevs/FunPaySigma)
 
 </div>
