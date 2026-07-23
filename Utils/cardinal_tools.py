@@ -141,20 +141,36 @@ def check_proxy(proxy: dict, max_retries: int = 3, delay: int = 3) -> bool:
     return False
 
 def validate_proxy(proxy: str):
-
+    """Проверяет прокси и возвращает схему, логин, пароль, IP и порт."""
+    if "://" in proxy:
+        scheme, rest = proxy.split("://", 1)
+    else:
+        scheme, rest = "http", proxy
     try:
-        if "@" in proxy:
-            login_password, ip_port = proxy.split("@")
-            login, password = login_password.split(":")
-            ip, port = ip_port.split(":")
+        if "@" in rest:
+            login_password, ip_port = rest.split("@", 1)
+            login, password = login_password.split(":", 1)
         else:
             login, password = "", ""
-            ip, port = proxy.split(":")
-        if not all([0 <= int(i) < 256 for i in ip.split(".")]) or ip.count(".") != 3                or not ip.replace(".", "").isdigit() or not 0 <= int(port) <= 65535:
-            raise Exception()
-    except:
-        raise ValueError("Прокси должны иметь формат login:password@ip:port или ip:port")
-    return login, password, ip, port
+            ip_port = rest
+        ip, port = ip_port.rsplit(":", 1)
+    except ValueError as exc:
+        raise ValueError("Прокси должны иметь формат scheme://login:password@ip:port или ip:port") from exc
+
+    ip_parts = ip.split(".")
+    if len(ip_parts) != 4 or not all(part.isdigit() and 0 <= int(part) < 256 for part in ip_parts):
+        raise ValueError("Неправильный IP")
+    if not port.isdigit() or not 0 < int(port) <= 65535:
+        raise ValueError("Неправильный порт")
+    if scheme not in ("http", "https", "socks5", "socks5h"):
+        raise ValueError("Схема прокси должна быть http, https, socks5 или socks5h")
+    return scheme, login, password, ip, port
+
+
+def build_proxy(scheme: str | None, login: str, password: str, ip: str, port: str) -> str:
+    scheme = scheme or "http"
+    auth = f"{login}:{password}@" if login and password else ""
+    return f"{scheme}://{auth}{ip}:{port}"
 
 def cache_proxy_dict(proxy_dict: dict[int, str]) -> None:
 
@@ -174,10 +190,15 @@ def load_proxy_dict() -> dict[int, str]:
 
         try:
             proxy = json.loads(proxy)
-            proxy = {int(k): v for k, v in proxy.items()}
+            proxy_dict = {}
+            for id_, proxy_str in proxy.items():
+                try:
+                    proxy_dict[int(id_)] = build_proxy(*validate_proxy(proxy_str))
+                except (TypeError, ValueError):
+                    logger.debug("Не удалось добавить прокси %s", proxy_str, exc_info=True)
         except json.decoder.JSONDecodeError:
             return {}
-        return proxy
+        return proxy_dict
 
 def cache_disabled_plugins(disabled_plugins: list[str]) -> None:
 

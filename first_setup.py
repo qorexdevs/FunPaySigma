@@ -3,7 +3,7 @@ from configparser import ConfigParser
 import time
 import telebot
 from colorama import Fore, Style
-from Utils.cardinal_tools import validate_proxy, hash_password, obfuscate_data
+from Utils.cardinal_tools import build_proxy, check_proxy, validate_proxy, hash_password, obfuscate_data
 
 default_config = {
     "FunPay": {
@@ -126,6 +126,39 @@ def contains_russian(text: str) -> bool:
             return True
     return False
 
+
+def input_proxy(set_telebot_proxy: bool = False) -> str | None:
+    """Cardinal-compatible interactive proxy input helper."""
+    while True:
+        proxy_input = input(f"{Fore.MAGENTA}{Style.BRIGHT}└───> {Style.RESET_ALL}").strip()
+        if not proxy_input:
+            if set_telebot_proxy:
+                telebot.apihelper.proxy = None
+            return None
+        try:
+            scheme, login, password, ip, port = validate_proxy(proxy_input)
+            proxy = build_proxy(scheme, login, password, ip, port)
+            if not check_proxy({"http": proxy, "https": proxy}):
+                print("\nНевалидный прокси. Попробуй еще раз!")
+                continue
+            if set_telebot_proxy:
+                telebot.apihelper.proxy = {"http": proxy, "https": proxy}
+            return proxy
+        except Exception as exc:
+            print(f"\nНеверный формат прокси: {exc}. Попробуй еще раз!")
+
+
+def setup_telegram_proxy():
+    """Сохраняет Cardinal-совместимую настройку прокси Telegram."""
+    config = ConfigParser()
+    config.read("configs/_main.cfg", encoding="utf-8")
+    proxy = input_proxy(set_telebot_proxy=True)
+    if "Telegram" not in config:
+        config.add_section("Telegram")
+    config.set("Telegram", "proxy", proxy or "")
+    with open("configs/_main.cfg", "w", encoding="utf-8") as f:
+        config.write(f)
+
 def first_setup():
     config = create_config_obj(default_config)
     sleep_time = 1
@@ -145,7 +178,7 @@ def first_setup():
         golden_key = input(f"{Fore.MAGENTA}{Style.BRIGHT}└───> {Style.RESET_ALL}").strip()
         if len(golden_key) != 32:
             print(
-                f"\n{Fore.CYAN}{Style.BRIGHT}Неверный формат токена. Попробуй еще раз! {Fore.RED}\(!!˚0˚)/{Style.RESET_ALL}")
+                f"\n{Fore.CYAN}{Style.BRIGHT}Неверный формат токена. Попробуй еще раз! {Fore.RED}\\(!!˚0˚)/{Style.RESET_ALL}")
             continue
         config.set("FunPay", "golden_key", f"b64:{obfuscate_data(golden_key)}")
         break
@@ -153,11 +186,11 @@ def first_setup():
     while True:
         print(f"\n{Fore.MAGENTA}{Style.BRIGHT}┌── {Fore.CYAN}"
               f"Если хочешь, ты можешь указать свой User-agent (введи в Google \"my user agent\"). Или можешь просто нажать Enter. "
-              f"{Fore.RED}¯\(°_o)/¯{Style.RESET_ALL}")
+              f"{Fore.RED}¯\\(°_o)/¯{Style.RESET_ALL}")
         user_agent = input(f"{Fore.MAGENTA}{Style.BRIGHT}└───> {Style.RESET_ALL}").strip()
         if contains_russian(user_agent):
             print(
-                f"\n{Fore.CYAN}{Style.BRIGHT}Ты не знаешь, что такое Google? {Fore.RED}\(!!˚0˚)/{Style.RESET_ALL}")
+                f"\n{Fore.CYAN}{Style.BRIGHT}Ты не знаешь, что такое Google? {Fore.RED}\\(!!˚0˚)/{Style.RESET_ALL}")
             continue
         if user_agent:
             config.set("FunPay", "user_agent", user_agent)
@@ -176,7 +209,7 @@ def first_setup():
             s = ""
             if str(ex):
                 s = f" ({str(ex)})"
-            print(f"\n{Fore.CYAN}{Style.BRIGHT}Попробуй еще раз!{s} {Fore.RED}\(!!˚0˚)/{Style.RESET_ALL}")
+            print(f"\n{Fore.CYAN}{Style.BRIGHT}Попробуй еще раз!{s} {Fore.RED}\\(!!˚0˚)/{Style.RESET_ALL}")
             continue
         break
 
@@ -188,7 +221,7 @@ def first_setup():
         if len(password) < 8 or password.lower() == password or password.upper() == password or not any(
                 [i.isdigit() for i in password]):
             print(
-                f"\n{Fore.CYAN}{Style.BRIGHT}Это плохой пароль. Попробуй еще раз! {Fore.RED}\(!!˚0˚)/{Style.RESET_ALL}")
+                f"\n{Fore.CYAN}{Style.BRIGHT}Это плохой пароль. Попробуй еще раз! {Fore.RED}\\(!!˚0˚)/{Style.RESET_ALL}")
             continue
         break
 
@@ -204,9 +237,10 @@ def first_setup():
         proxy = input(f"{Fore.MAGENTA}{Style.BRIGHT}└───> {Style.RESET_ALL}").strip()
         if proxy:
             try:
-                login, password, ip, port = validate_proxy(proxy)
+                scheme, login, password, ip, port = validate_proxy(proxy)
                 config.set("Proxy", "enable", "1")
                 config.set("Proxy", "check", "1")
+                config.set("Proxy", "type", "SOCKS5" if scheme.startswith("socks5") else "HTTP")
                 config.set("Proxy", "login", f"b64:{obfuscate_data(login)}")
                 config.set("Proxy", "password", f"b64:{obfuscate_data(password)}")
                 config.set("Proxy", "ip", f"b64:{obfuscate_data(ip)}")

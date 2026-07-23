@@ -3,7 +3,7 @@
 # ⚡ FunPay Sigma
 
 [![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![Version](https://img.shields.io/badge/Версия-2.11.1-4FC3F7?style=for-the-badge)](https://github.com/qorexdevs/FunPaySigma/releases)
+[![Version](https://img.shields.io/badge/Версия-2.13.0-4FC3F7?style=for-the-badge)](https://github.com/qorexdevs/FunPaySigma/releases)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 [![Telegram](https://img.shields.io/badge/Telegram-Чат-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/FunPaySigmaChat)
 [![Plugins](https://img.shields.io/badge/Плагины-Каталог-orange?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/fps_plugins)
@@ -119,6 +119,10 @@
 3. Готово — плагин активен
 
 📂 **[Официальный каталог плагинов](https://t.me/fps_plugins)**
+
+Плагины для актуального FunPay Cardinal поддерживаются через совместимый модуль
+`cardinal`, синхронизированный `FunPayAPI` и полный набор `BIND_TO_*` хуков.
+Подробности: [совместимость с плагинами Cardinal](docs/CARDINAL_COMPATIBILITY.md).
 
 > ⚠️ **Безопасность:** Устанавливайте только плагины из проверенных источников или те, код которых вы проверили лично. Плагин имеет полный доступ к аккаунту FunPay.
 

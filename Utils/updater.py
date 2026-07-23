@@ -22,12 +22,53 @@ CACHE_TTL = 3600
 
 class Release:
 
-    def __init__(self, name: str, description: str, sources_link: str, tag_name: str):
+    def __init__(self, name: str, description: str, sources_link: str, tag_name: str | None = None):
 
         self.name = name
         self.description = description
         self.sources_link = sources_link
-        self.tag_name = tag_name
+        self.tag_name = tag_name or name
+
+
+def get_tags(current_tag: str) -> list[str] | None:
+    """Cardinal-compatible tag lookup for the Sigma repository."""
+    try:
+        response = requests.get("https://api.github.com/repos/qorexdevs/FunPaySigma/tags",
+                                headers=HEADERS, timeout=15)
+        response.raise_for_status()
+        tags = [item.get("name") for item in response.json() if item.get("name")]
+        return tags or None
+    except requests.RequestException:
+        logger.debug("TRACEBACK", exc_info=True)
+        return None
+
+
+def get_next_tag(tags: list[str], current_tag: str):
+    """Возвращает следующий тег по правилам обновлятора Cardinal."""
+    try:
+        current_index = tags.index(current_tag)
+    except ValueError:
+        return tags[-1] if tags else None
+    return None if current_index == 0 else tags[current_index - 1]
+
+
+def get_releases(from_tag: str) -> list[Release] | None:
+    """Cardinal-compatible release lookup against qorexdevs/FunPaySigma."""
+    try:
+        response = requests.get("https://api.github.com/repos/qorexdevs/FunPaySigma/releases",
+                                headers=HEADERS, timeout=15)
+        response.raise_for_status()
+        releases = response.json()
+        start = next((index for index, item in enumerate(releases)
+                      if item.get("tag_name") == from_tag), None)
+        if start is None:
+            return None
+        return [Release(item.get("tag_name", ""), item.get("body") or "",
+                        item.get("zipball_url", ""), item.get("tag_name"))
+                for item in reversed(releases[:start + 1])]
+    except requests.RequestException:
+        logger.debug("TRACEBACK", exc_info=True)
+        return None
 
 def parse_semver(version_str: str) -> tuple | None:
     version_str = version_str.lstrip('v')

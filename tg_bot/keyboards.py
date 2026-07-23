@@ -742,3 +742,8 @@ def LINKS_KB(language: str = "ru") -> K:
     ]
     kb.add(*btns)
     return kb
+
+
+def links(language: str | None = None) -> K:
+    """Имя клавиатуры из Cardinal; сохраняется для совместимости плагинов."""
+    return LINKS_KB(language or "ru")

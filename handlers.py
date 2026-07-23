@@ -608,6 +608,26 @@ def update_profile_lots_handler(c: Cardinal, e: OrdersListChangedEvent):
     for lot_id, lot in lots.items():
         c.profile.update_lot(lot)
 
+
+# Public names used by Cardinal plugins.
+update_current_lots = update_current_lots_handler
+update_profile_lots = update_profile_lots_handler
+
+
+def update_profiles_handler(cardinal: Cardinal,
+                            event: NewOrderEvent | OrdersListChangedEvent, *args):
+    """Cardinal-compatible aggregate profile refresh handler."""
+    def refresh():
+        try:
+            update_current_lots_handler(cardinal, event)
+            update_profile_lots_handler(cardinal, event)
+            update_lots_state_handler(cardinal, event)
+        except Exception:
+            logger.warning("Не удалось обновить профили и состояния лотов.")
+            logger.debug("TRACEBACK", exc_info=True)
+
+    Thread(target=refresh, daemon=True).start()
+
 def log_new_order_handler(c: Cardinal, e: NewOrderEvent, *args):
 
     logger.info(f"Новый заказ! ID: $YELLOW#{e.order.id}$RESET")

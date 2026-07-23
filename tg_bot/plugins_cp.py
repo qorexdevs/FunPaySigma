@@ -162,16 +162,17 @@ def init_plugins_cp(cardinal: Cardinal, *args):
             bot.answer_callback_query(c.id)
             return
 
-        if not hasattr(cardinal, 'pinned_plugins'):
-            cardinal.pinned_plugins = []
-
-        if uuid in cardinal.pinned_plugins:
-            cardinal.pinned_plugins.remove(uuid)
+        if hasattr(cardinal, "pin_plugin"):
+            cardinal.pin_plugin(uuid)
         else:
-            cardinal.pinned_plugins.append(uuid)
-
-        from Utils import cardinal_tools
-        cardinal_tools.cache_pinned_plugins(cardinal.pinned_plugins)
+            if not hasattr(cardinal, 'pinned_plugins'):
+                cardinal.pinned_plugins = []
+            if uuid in cardinal.pinned_plugins:
+                cardinal.pinned_plugins.remove(uuid)
+            else:
+                cardinal.pinned_plugins.append(uuid)
+            from Utils import cardinal_tools
+            cardinal_tools.cache_pinned_plugins(cardinal.pinned_plugins)
         logger.info(_("log_pl_pinned", c.from_user.username or str(c.from_user.id), c.from_user.id, cardinal.plugins[uuid].name))
         bot.answer_callback_query(c.id, text="📌", show_alert=False)
         c.data = f"{CBT.EDIT_PLUGIN}:{uuid}:{offset}"

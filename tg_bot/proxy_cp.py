@@ -4,7 +4,7 @@ import time
 from typing import TYPE_CHECKING
 from tg_bot import utils, static_keyboards as skb, keyboards as kb, CBT
 import telebot.apihelper
-from Utils.cardinal_tools import validate_proxy, cache_proxy_dict, check_proxy
+from Utils.cardinal_tools import build_proxy, validate_proxy, cache_proxy_dict, check_proxy
 from telebot.types import InlineKeyboardMarkup as K, InlineKeyboardButton as B
 
 if TYPE_CHECKING:
@@ -26,18 +26,8 @@ def init_proxy_cp(crd: Cardinal, *args):
 
     def check_one_proxy(proxy: str):
         try:
-
-            proxy_type = crd.MAIN_CFG["Proxy"]["type"]
-            if proxy_type == "SOCKS5":
-                d = {
-                    "http": f"socks5://{proxy}",
-                    "https": f"socks5://{proxy}"
-                }
-            else:
-                d = {
-                    "http": f"http://{proxy}",
-                    "https": f"http://{proxy}"
-                }
+            proxy_url = build_proxy(*validate_proxy(proxy))
+            d = {"http": proxy_url, "https": proxy_url}
             pr_dict[proxy] = check_proxy(d)
         except:
             pass
@@ -84,8 +74,10 @@ def init_proxy_cp(crd: Cardinal, *args):
         tg.clear_state(m.chat.id, m.from_user.id, True)
         proxy = m.text
         try:
-            login, password, ip, port = validate_proxy(proxy)
-            proxy_str = f"{f'{login}:{password}@' if login and password else ''}{ip}:{port}"
+            scheme, login, password, ip, port = validate_proxy(proxy)
+            if "://" not in proxy:
+                scheme = "socks5" if crd.MAIN_CFG["Proxy"]["type"] == "SOCKS5" else "http"
+            proxy_str = build_proxy(scheme, login, password, ip, port)
             if proxy_str in crd.proxy_dict.values():
                 bot.send_message(m.chat.id, _("proxy_already_exists").format(utils.escape(proxy_str)), reply_markup=kb)
                 return
@@ -111,14 +103,14 @@ def init_proxy_cp(crd: Cardinal, *args):
             open_proxy_list(c)
             return
 
-        login, password, ip, port = validate_proxy(proxy)
-        proxy_str = f"{f'{login}:{password}@' if login and password else ''}{ip}:{port}"
+        scheme, login, password, ip, port = validate_proxy(proxy)
 
         crd.MAIN_CFG["Proxy"].update({
             "ip": ip,
             "port": port,
             "login": login,
-            "password": password
+            "password": password,
+            "type": "SOCKS5" if scheme.startswith("socks5") else "HTTP",
         })
         crd.save_config(crd.MAIN_CFG, "configs/_main.cfg")
 
@@ -133,9 +125,9 @@ def init_proxy_cp(crd: Cardinal, *args):
         c.data = f"{CBT.PROXY}:{offset}"
         if proxy_id in crd.proxy_dict.keys():
             proxy = crd.proxy_dict[proxy_id]
-            login, password, ip, port = validate_proxy(proxy)
+            scheme, login, password, ip, port = validate_proxy(proxy)
             now_proxy = crd.account.proxy
-            if not now_proxy or now_proxy.get("http").replace("http://", "", 1) != proxy:
+            if not now_proxy or proxy not in now_proxy.values():
                 del crd.proxy_dict[proxy_id]
                 cache_proxy_dict(crd.proxy_dict)
                 if proxy in pr_dict:

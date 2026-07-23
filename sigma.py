@@ -62,10 +62,12 @@ def get_cardinal() -> None | Cardinal:
 class PluginData:
 
     __slots__ = ('name', 'version', 'description', 'credits', 'uuid', 'path',
-                 'plugin', 'settings_page', 'commands', 'delete_handler', 'enabled')
+                 'plugin', 'settings_page', 'commands', 'delete_handler', 'enabled',
+                 'pinned', '_error_count')
 
     def __init__(self, name: str, version: str, desc: str, credentials: str, uuid: str,
-                 path: str, plugin: ModuleType, settings_page: bool, delete_handler: Callable | None, enabled: bool):
+                 path: str, plugin: ModuleType, settings_page: bool, delete_handler: Callable | None,
+                 enabled: bool, pinned: bool = False):
 
         self.name = name
         self.version = version
@@ -79,6 +81,26 @@ class PluginData:
         self.commands = {}
         self.delete_handler = delete_handler
         self.enabled = enabled
+        self.pinned = pinned
+        self._error_count = 0
+
+
+class RaiseLotsInfo(str):
+    """Результат поднятия категории, совместимый со строковым и Sigma-контрактом."""
+
+    def __new__(cls, text: str, wait_time: int | float = 0, last_interval: int | None = None):
+        value = super().__new__(cls, text)
+        value.wait_time = wait_time
+        value.last_interval = last_interval
+        return value
+
+    def __getitem__(self, key):
+        if isinstance(key, str):
+            return {"wait_time": self.wait_time, "last_interval": self.last_interval}[key]
+        return super().__getitem__(key)
+
+    def get(self, key: str, default=None):
+        return {"wait_time": self.wait_time, "last_interval": self.last_interval}.get(key, default)
 
 class Cardinal(object):
     def __new__(cls, *args, **kwargs):
@@ -109,19 +131,10 @@ class Cardinal(object):
 
                 ip, port = self.MAIN_CFG["Proxy"]["ip"], self.MAIN_CFG["Proxy"]["port"]
                 login, password = self.MAIN_CFG["Proxy"]["login"], self.MAIN_CFG["Proxy"]["password"]
-                proxy_str = f"{f'{login}:{password}@' if login and password else ''}{ip}:{port}"
-
                 proxy_type = self.MAIN_CFG["Proxy"].get("type", "HTTP")
-                if proxy_type == "SOCKS5":
-                    self.proxy = {
-                        "http": f"socks5://{proxy_str}",
-                        "https": f"socks5://{proxy_str}"
-                    }
-                else:
-                    self.proxy = {
-                        "http": f"http://{proxy_str}",
-                        "https": f"http://{proxy_str}"
-                    }
+                scheme = "socks5" if proxy_type == "SOCKS5" else "http"
+                proxy_str = cardinal_tools.build_proxy(scheme, login, password, ip, port)
+                self.proxy = {"http": proxy_str, "https": proxy_str}
 
                 if proxy_str not in self.proxy_dict.values():
                     max_id = max(self.proxy_dict.keys(), default=-1)
@@ -713,30 +726,21 @@ class Cardinal(object):
             last_interval = None
             try:
                 time.sleep(1)
-                self.account.raise_lots(subcat.category.id)
+                wait_time = self.account.raise_lots(subcat.category.id)
                 logger.info(_("crd_lots_raised", subcat.category.name))
                 raise_ok = True
                 last_time = self.raised_time.get(subcat.category.id)
                 self.raised_time[subcat.category.id] = new_time = int(time.time())
                 last_interval = (new_time - last_time) if last_time else None
 
-                wait_time = 7200
-                next_time = new_time + wait_time
-                self.raise_time[subcat.category.id] = next_time
-                self.save_raise_time()
-                next_call = next_time if next_time < next_call else next_call
+                wait_time = wait_time or 7200
             except FunPayAPI.exceptions.RaiseError as e:
                 if e.wait_time is not None:
                     wait_time = e.wait_time
-                    next_time = int(time.time()) + e.wait_time
                 else:
                     logger.error(_("crd_raise_unexpected_err", subcat.category.name))
                     time.sleep(10)
-                    next_time = int(time.time()) + 1
-
-                self.raise_time[subcat.category.id] = next_time
-                self.save_raise_time()
-                next_call = next_time if next_time < next_call else next_call
+                    wait_time = 1
 
                 if not raise_ok:
                     continue
@@ -752,12 +756,20 @@ class Cardinal(object):
                     logger.error(_("crd_raise_unexpected_err", subcat.category.name))
                 logger.debug("TRACEBACK", exc_info=True)
                 time.sleep(t)
-                next_time = int(time.time()) + 1
-                next_call = next_time if next_time < next_call else next_call
+                wait_time = 1
                 if not raise_ok:
                     continue
 
-            raise_info = {"wait_time": wait_time, "last_interval": last_interval}
+            next_time = int(time.time()) + wait_time + 1
+            self.raise_time[subcat.category.id] = next_time
+            self.save_raise_time()
+            next_call = next_time if next_time < next_call else next_call
+
+            raise_info = RaiseLotsInfo(
+                f"Подождите {cardinal_tools.time_to_str(wait_time)}.",
+                wait_time,
+                last_interval,
+            )
             self.run_handlers(self.post_lots_raise_handlers, (self, subcat.category, raise_info))
         return next_call if next_call < float("inf") else 10
 
@@ -1420,7 +1432,7 @@ class Cardinal(object):
 
         try:
             uuid_obj = UUID(uuid, version=4)
-        except ValueError:
+        except (TypeError, ValueError, AttributeError):
             return False
         return str(uuid_obj) == uuid
 
@@ -1531,7 +1543,8 @@ class Cardinal(object):
             plugin_data = PluginData(data["NAME"], data["VERSION"], data["DESCRIPTION"], data["CREDITS"], data["UUID"],
                                      f"plugins/{data['_file']}",
                                      plugin, data["SETTINGS_PAGE"], data["BIND_TO_DELETE"],
-                                     False if data["UUID"] in self.disabled_plugins else True)
+                                     False if data["UUID"] in self.disabled_plugins else True,
+                                     data["UUID"] in self.pinned_plugins)
 
             self.plugins[data["UUID"]] = plugin_data
 
@@ -1610,6 +1623,18 @@ class Cardinal(object):
         elif not self.plugins[uuid].enabled and uuid not in self.disabled_plugins:
             self.disabled_plugins.append(uuid)
         cardinal_tools.cache_disabled_plugins(self.disabled_plugins)
+
+    def pin_plugin(self, uuid):
+        """Закрепляет или открепляет плагин и сохраняет список закреплённых UUID."""
+        if uuid not in self.plugins:
+            return
+        plugin = self.plugins[uuid]
+        plugin.pinned = not plugin.pinned
+        if plugin.pinned and uuid not in self.pinned_plugins:
+            self.pinned_plugins.append(uuid)
+        elif not plugin.pinned and uuid in self.pinned_plugins:
+            self.pinned_plugins.remove(uuid)
+        cardinal_tools.cache_pinned_plugins(self.pinned_plugins)
 
     @property
     def schedule_enabled(self) -> bool:
@@ -1720,19 +1745,10 @@ class Cardinal(object):
 
             ip, port = self.MAIN_CFG["Proxy"]["ip"], self.MAIN_CFG["Proxy"]["port"]
             login, password = self.MAIN_CFG["Proxy"]["login"], self.MAIN_CFG["Proxy"]["password"]
-            proxy_str = f"{f'{login}:{password}@' if login and password else ''}{ip}:{port}"
-
             proxy_type = self.MAIN_CFG["Proxy"]["type"]
-            if proxy_type == "SOCKS5":
-                self.proxy = {
-                    "http": f"socks5://{proxy_str}",
-                    "https": f"socks5://{proxy_str}"
-                }
-            else:
-                self.proxy = {
-                    "http": f"http://{proxy_str}",
-                    "https": f"http://{proxy_str}"
-                }
+            scheme = "socks5" if proxy_type == "SOCKS5" else "http"
+            proxy_str = cardinal_tools.build_proxy(scheme, login, password, ip, port)
+            self.proxy = {"http": proxy_str, "https": proxy_str}
 
             self.account.proxy = self.proxy
         else:

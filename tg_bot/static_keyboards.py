@@ -8,6 +8,13 @@ _ = localizer.translate
 def CLEAR_STATE_BTN() -> K:
     return K().add(B(_("gl_cancel"), callback_data=CBT.CLEAR_STATE))
 
+
+def UPLOAD_PLUGIN() -> K:
+    """Клавиатура загрузки плагина с Cardinal-совместимым именем."""
+    return (K()
+            .add(B(_("mm_plugins"), url="https://t.me/fps_plugins"))
+            .add(B(_("gl_cancel"), callback_data=CBT.CLEAR_STATE)))
+
 def REFRESH_BTN() -> K:
     return K().add(B(_("gl_refresh"), callback_data=CBT.UPDATE_PROFILE))
 
