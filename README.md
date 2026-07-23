@@ -3,7 +3,7 @@
 # ⚡ FunPay Sigma
 
 [![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![Version](https://img.shields.io/badge/Версия-2.13.0-4FC3F7?style=for-the-badge)](https://github.com/qorexdevs/FunPaySigma/releases)
+[![Version](https://img.shields.io/badge/Версия-2.13.1-4FC3F7?style=for-the-badge)](https://github.com/qorexdevs/FunPaySigma/releases)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 [![Telegram](https://img.shields.io/badge/Telegram-Чат-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/FunPaySigmaChat)
 [![Plugins](https://img.shields.io/badge/Плагины-Каталог-orange?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/fps_plugins)

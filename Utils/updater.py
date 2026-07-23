@@ -12,8 +12,14 @@ logger = getLogger("FPS.update_checker")
 localizer = Localizer()
 _ = localizer.translate
 
+REPOSITORY = "qorexdevs/FunPaySigma"
+TAGS_URL = f"https://api.github.com/repos/{REPOSITORY}/tags"
+RELEASES_URL = f"https://api.github.com/repos/{REPOSITORY}/releases"
+LATEST_RELEASE_URL = f"{RELEASES_URL}/latest"
+
 HEADERS = {
     "accept": "application/vnd.github+json",
+    "User-Agent": "FunPaySigma-updater",
     "X-GitHub-Api-Version": "2022-11-28"
 }
 
@@ -33,8 +39,7 @@ class Release:
 def get_tags(current_tag: str) -> list[str] | None:
     """Cardinal-compatible tag lookup for the Sigma repository."""
     try:
-        response = requests.get("https://api.github.com/repos/qorexdevs/FunPaySigma/tags",
-                                headers=HEADERS, timeout=15)
+        response = requests.get(TAGS_URL, headers=HEADERS, timeout=15)
         response.raise_for_status()
         tags = [item.get("name") for item in response.json() if item.get("name")]
         return tags or None
@@ -55,8 +60,7 @@ def get_next_tag(tags: list[str], current_tag: str):
 def get_releases(from_tag: str) -> list[Release] | None:
     """Cardinal-compatible release lookup against qorexdevs/FunPaySigma."""
     try:
-        response = requests.get("https://api.github.com/repos/qorexdevs/FunPaySigma/releases",
-                                headers=HEADERS, timeout=15)
+        response = requests.get(RELEASES_URL, headers=HEADERS, timeout=15)
         response.raise_for_status()
         releases = response.json()
         start = next((index for index, item in enumerate(releases)
@@ -98,7 +102,8 @@ def _load_cache() -> dict | None:
         if os.path.exists(CACHE_FILE):
             with open(CACHE_FILE, "r", encoding="utf-8") as f:
                 cache = json.load(f)
-                if time.time() - cache.get("timestamp", 0) < CACHE_TTL:
+                if (cache.get("repository") == REPOSITORY
+                        and time.time() - cache.get("timestamp", 0) < CACHE_TTL):
                     return cache.get("release")
     except:
         pass
@@ -108,7 +113,7 @@ def _save_cache(release_data: dict):
     try:
         os.makedirs(os.path.dirname(CACHE_FILE), exist_ok=True)
         with open(CACHE_FILE, "w", encoding="utf-8") as f:
-            json.dump({"timestamp": time.time(), "release": release_data}, f)
+            json.dump({"repository": REPOSITORY, "timestamp": time.time(), "release": release_data}, f)
     except:
         pass
 
@@ -125,8 +130,7 @@ def get_latest_release(max_retries: int = 3) -> Release | None:
 
     for attempt in range(max_retries):
         try:
-            response = requests.get("https://api.github.com/repos/qorexdevs/FunPaySigma/releases/latest",
-                                    headers=HEADERS, timeout=15)
+            response = requests.get(LATEST_RELEASE_URL, headers=HEADERS, timeout=15)
 
             if response.status_code == 403:
                 remaining = response.headers.get("X-RateLimit-Remaining", "0")
