@@ -78,6 +78,10 @@ class TGBot:
             "lots_bulk": "cmd_lots_bulk",
             "discount": "cmd_discount",
             "activity": "cmd_activity",
+            "dashboard": "cmd_dashboard",
+            "sales": "cmd_sales",
+            "lot_health": "cmd_lot_health",
+            "notification_digest": "cmd_notification_digest",
         }
         self.__default_notification_settings = {
             utils.NotificationTypes.ad: 1,
@@ -760,6 +764,317 @@ class TGBot:
             reply_markup=kb
         )
         self.bot.answer_callback_query(c.id)
+
+    @staticmethod
+    def _format_dashboard_duration(seconds: int | float) -> str:
+        seconds = max(0, int(seconds))
+        days, seconds = divmod(seconds, 86400)
+        hours, seconds = divmod(seconds, 3600)
+        minutes, seconds = divmod(seconds, 60)
+        parts = []
+        if days:
+            parts.append(f"{days}д")
+        if hours or days:
+            parts.append(f"{hours}ч")
+        if minutes or hours or days:
+            parts.append(f"{minutes}м")
+        parts.append(f"{seconds}с")
+        return " ".join(parts)
+
+    def _get_lot_snapshot(self) -> tuple[list, int, int, int, int]:
+        """Возвращает кэшированные лоты и безопасную сводку автовыдачи."""
+        lots = []
+        try:
+            lots = list(getattr(self.cardinal, "all_lots", None) or [])
+            if not lots and getattr(self.cardinal, "profile", None):
+                lots = list(self.cardinal.profile.get_lots())
+        except Exception:
+            logger.debug("Не удалось получить список лотов для дашборда", exc_info=True)
+
+        active = sum(1 for lot in lots if bool(getattr(lot, "active", False)))
+        configured = 0
+        product_files = 0
+        try:
+            ad_cfg = self.cardinal.AD_CFG
+            ad_sections = set(ad_cfg.sections())
+            lot_names = {str(getattr(lot, "title", "")) for lot in lots}
+            configured = len(ad_sections.intersection(lot_names))
+            product_files = sum(
+                1 for section in ad_sections
+                if ad_cfg[section].get("productsFileName")
+            )
+        except Exception:
+            logger.debug("Не удалось получить конфигурацию автовыдачи", exc_info=True)
+        return lots, active, len(lots) - active, configured, product_files
+
+    def _dashboard_text(self) -> str:
+        account = self.cardinal.account
+        account_id = getattr(account, "id", None) or "—"
+        account_username = str(getattr(account, "username", None) or "—")
+        lots, active, inactive, autodelivery, product_files = self._get_lot_snapshot()
+        process = psutil.Process()
+        uptime = int(time.time()) - int(getattr(self.cardinal, "start_time", time.time()))
+        session_ok = bool(getattr(account, "is_initiated", False))
+        proxy_cfg = self.cardinal.MAIN_CFG["Proxy"]
+        proxy_enabled = proxy_cfg.getboolean("enable", fallback=False)
+        plugins = getattr(self.cardinal, "plugins", {})
+        pending = len(getattr(self.cardinal, "pending_orders", {}) or {})
+        confirmed = len(getattr(self.cardinal, "confirmed_orders", {}) or {})
+        balance = getattr(self.cardinal, "balance", None)
+
+        if balance is None:
+            balance_text = "—"
+        else:
+            balance_text = (
+                f"₽ {getattr(balance, 'available_rub', 0):.2f} · "
+                f"$ {getattr(balance, 'available_usd', 0):.2f} · "
+                f"€ {getattr(balance, 'available_eur', 0):.2f}"
+            )
+
+        return (
+            f"📊 <b>{_('dashboard_title')}</b>\n\n"
+            f"⚡ <b>{_('dashboard_runtime')}:</b> <code>{self._format_dashboard_duration(uptime)}</code>\n"
+            f"🧩 <b>{_('dashboard_version')}:</b> <code>v{utils.escape(str(self.cardinal.VERSION))}</code>\n"
+            f"🖥 <b>{_('dashboard_resources')}:</b> <code>{process.memory_info().rss // 1048576} МБ</code>, "
+            f"CPU <code>{process.cpu_percent(interval=None):.1f}%</code>\n\n"
+            f"👤 <b>{_('dashboard_account')}:</b> "
+            f"<a href='https://funpay.com/users/{account_id}'>{utils.escape(account_username)}</a>\n"
+            f"🔐 <b>{_('dashboard_session')}:</b> {'✅' if session_ok else '❌'}\n"
+            f"💰 <b>{_('dashboard_balance')}:</b> <code>{balance_text}</code>\n"
+            f"🛒 <b>{_('dashboard_orders')}:</b> <code>{getattr(account, 'active_sales', 0) or 0}</code> "
+            f"(ожидают: <code>{pending}</code>, подтверждены: <code>{confirmed}</code>)\n"
+            f"📦 <b>{_('dashboard_lots')}:</b> <code>{len(lots)}</code> "
+            f"(✅ {active} / ❌ {inactive})\n"
+            f"🚚 <b>{_('dashboard_autodelivery')}:</b> <code>{autodelivery}</code> · "
+            f"складов <code>{product_files}</code>\n"
+            f"🔌 <b>{_('dashboard_plugins')}:</b> <code>{len(plugins)}</code> · "
+            f"🌐 прокси {'✅' if proxy_enabled else '❌'}\n"
+            f"🔔 <b>{_('dashboard_chats')}:</b> <code>{len(self.notification_settings)}</code>"
+        )
+
+    @staticmethod
+    def _dashboard_keyboard() -> K:
+        return (K()
+                .row(B(_("gl_refresh"), callback_data=CBT.DASHBOARD_REFRESH),
+                     B(_("mm_sales"), callback_data=CBT.SALES))
+                .row(B(_("mm_lot_health"), callback_data=CBT.LOT_HEALTH),
+                     B(_("mm_notification_digest"), callback_data=CBT.NOTIFICATION_DIGEST))
+                .add(B(_("gl_back"), callback_data=CBT.MAIN3)))
+
+    def send_dashboard(self, m: Message):
+        try:
+            self.bot.send_message(m.chat.id, self._dashboard_text(),
+                                  disable_web_page_preview=True,
+                                  reply_markup=self._dashboard_keyboard())
+        except Exception:
+            logger.error("Ошибка формирования Telegram-дашборда", exc_info=True)
+            self.bot.send_message(m.chat.id, _("dashboard_error"))
+
+    def open_dashboard(self, c: CallbackQuery):
+        self.bot.answer_callback_query(c.id)
+        try:
+            self.bot.edit_message_text(self._dashboard_text(), c.message.chat.id, c.message.id,
+                                       disable_web_page_preview=True,
+                                       reply_markup=self._dashboard_keyboard())
+        except Exception:
+            self.bot.send_message(c.message.chat.id, self._dashboard_text(),
+                                  disable_web_page_preview=True,
+                                  reply_markup=self._dashboard_keyboard())
+
+    def refresh_dashboard(self, c: CallbackQuery):
+        self.bot.answer_callback_query(c.id, "Обновляю данные…")
+        try:
+            self.cardinal.account.get()
+            new_balance = self.cardinal.get_balance()
+            if new_balance is not None:
+                self.cardinal.balance = new_balance
+            self.bot.edit_message_text(self._dashboard_text(), c.message.chat.id, c.message.id,
+                                       disable_web_page_preview=True,
+                                       reply_markup=self._dashboard_keyboard())
+        except Exception:
+            logger.debug("Ошибка обновления Telegram-дашборда", exc_info=True)
+            try:
+                self.bot.edit_message_text(self._dashboard_text(), c.message.chat.id, c.message.id,
+                                           disable_web_page_preview=True,
+                                           reply_markup=self._dashboard_keyboard())
+            except Exception:
+                self.bot.send_message(c.message.chat.id, _("dashboard_error"))
+
+    def _sales_keyboard(self, orders: list) -> K:
+        keyboard = K()
+        for order in orders:
+            order_id = str(getattr(order, "id", ""))
+            keyboard.row(
+                B(f"{_('ord_open')} #{order_id}", url=f"https://funpay.com/orders/{order_id}/"),
+                self._copy_order_button(order_id),
+            )
+        keyboard.row(B(_("gl_refresh"), callback_data=CBT.SALES_REFRESH),
+                     B(_("mm_dashboard"), callback_data=CBT.DASHBOARD))
+        return keyboard
+
+    @staticmethod
+    def _copy_order_button(order_id: str) -> B:
+        """Использует Telegram copy_text на новых библиотеках и callback fallback на старых."""
+        try:
+            from telebot.types import CopyTextButton
+            return B("📋 ID", copy_text=CopyTextButton(text=order_id))
+        except (ImportError, AttributeError, TypeError):
+            return B("📋 ID", callback_data=f"{CBT.COPY_ORDER_ID}:{order_id}")
+
+    @staticmethod
+    def _sales_status(order) -> str:
+        name = getattr(getattr(order, "status", None), "name", "")
+        return {
+            "PAID": "🟡",
+            "CLOSED": "🟢",
+            "REFUNDED": "🔴",
+            "PARTIALLY_REFUNDED": "🟠",
+        }.get(name, "⚪")
+
+    @staticmethod
+    def _sale_sort_key(item):
+        date = getattr(item, "date", None)
+        try:
+            return date.timestamp()
+        except (AttributeError, TypeError, ValueError, OSError):
+            return 0
+
+    def _sales_text(self) -> tuple[str, list]:
+        _, orders, _, _ = self.cardinal.account.get_sales(
+            include_paid=True, include_closed=True, include_refunded=True
+        )
+        orders = list(orders or [])
+        orders = sorted(orders, key=self._sale_sort_key, reverse=True)
+        visible = orders[:8]
+        if not visible:
+            return _("sales_empty"), []
+
+        lines = [f"🛒 <b>{_('sales_title')}</b>", ""]
+        for order in visible:
+            order_id = utils.escape(str(getattr(order, "id", "?")))
+            buyer = utils.escape(str(getattr(order, "buyer_username", "—")))
+            description = utils.escape(str(getattr(order, "description", "—")))[:90]
+            date = getattr(order, "date", None)
+            try:
+                date_text = date.strftime("%d.%m %H:%M") if date else "—"
+            except AttributeError:
+                date_text = utils.escape(str(date))
+            price_value = getattr(order, "price", 0) or 0
+            try:
+                price = f"{price_value:g} {getattr(order, 'currency', '')}"
+            except (TypeError, ValueError):
+                price = f"{price_value} {getattr(order, 'currency', '')}"
+            lines.append(f"{self._sales_status(order)} <b>#{order_id}</b> · <code>{price}</code> · {date_text}")
+            lines.append(f"   {buyer}: {description}")
+        if len(orders) > len(visible):
+            lines.append("")
+            lines.append(_("sales_more", len(orders) - len(visible)))
+        return "\n".join(lines), visible
+
+    def send_sales(self, m: Message):
+        try:
+            text, orders = self._sales_text()
+            self.bot.send_message(m.chat.id, text, disable_web_page_preview=True,
+                                  reply_markup=self._sales_keyboard(orders))
+        except Exception:
+            logger.error("Ошибка получения списка продаж FunPay", exc_info=True)
+            self.bot.send_message(m.chat.id, _("sales_error"))
+
+    def open_sales(self, c: CallbackQuery):
+        self.bot.answer_callback_query(c.id, "Загружаю продажи…")
+        try:
+            text, orders = self._sales_text()
+            self.bot.edit_message_text(text, c.message.chat.id, c.message.id,
+                                       disable_web_page_preview=True,
+                                       reply_markup=self._sales_keyboard(orders))
+        except Exception:
+            logger.error("Ошибка обновления списка продаж FunPay", exc_info=True)
+            self.bot.edit_message_text(_("sales_error"), c.message.chat.id, c.message.id,
+                                       reply_markup=self._dashboard_keyboard())
+
+    def copy_order_id(self, c: CallbackQuery):
+        order_id = c.data.split(":", 1)[1] if ":" in c.data else "?"
+        self.bot.answer_callback_query(c.id, f"#{order_id}", show_alert=True)
+
+    def _lot_health_text(self) -> str:
+        lots, active, inactive, autodelivery, product_files = self._get_lot_snapshot()
+        cfg_sections = len(self.cardinal.AD_CFG.sections())
+        orphaned = max(0, cfg_sections - autodelivery)
+        return (
+            f"📦 <b>{_('lot_health_title')}</b>\n\n"
+            f"Всего лотов: <code>{len(lots)}</code>\n"
+            f"✅ Активных: <code>{active}</code>\n"
+            f"❌ Неактивных: <code>{inactive}</code>\n"
+            f"🚚 Настроена автовыдача: <code>{autodelivery}</code>\n"
+            f"📁 Файлов складов: <code>{product_files}</code>\n"
+            f"⚠️ Конфигураций без найденного лота: <code>{orphaned}</code>\n\n"
+            f"{_('lot_health_hint')}"
+        )
+
+    @staticmethod
+    def _lot_health_keyboard() -> K:
+        return (K()
+                .row(B(_("gl_refresh"), callback_data=CBT.LOT_HEALTH_REFRESH),
+                     B(_("mm_sales"), callback_data=CBT.SALES))
+                .row(B(_("mm_dashboard"), callback_data=CBT.DASHBOARD),
+                     B(_("gl_back"), callback_data=CBT.MAIN3)))
+
+    def send_lot_health(self, m: Message):
+        self.bot.send_message(m.chat.id, self._lot_health_text(), reply_markup=self._lot_health_keyboard())
+
+    def open_lot_health(self, c: CallbackQuery):
+        self.bot.answer_callback_query(c.id)
+        try:
+            self.bot.edit_message_text(self._lot_health_text(), c.message.chat.id, c.message.id,
+                                       reply_markup=self._lot_health_keyboard())
+        except Exception:
+            self.bot.send_message(c.message.chat.id, self._lot_health_text(), reply_markup=self._lot_health_keyboard())
+
+    def refresh_lot_health(self, c: CallbackQuery):
+        self.bot.answer_callback_query(c.id, "Синхронизирую лоты…")
+        try:
+            self.cardinal.update_lots_and_categories()
+        except Exception:
+            logger.debug("Не удалось обновить профиль для lot health", exc_info=True)
+        try:
+            self.bot.edit_message_text(self._lot_health_text(), c.message.chat.id, c.message.id,
+                                       reply_markup=self._lot_health_keyboard())
+        except Exception:
+            self.bot.send_message(c.message.chat.id, self._lot_health_text(),
+                                  reply_markup=self._lot_health_keyboard())
+
+    def _notification_digest_payload(self, chat_id: int) -> tuple[str, K]:
+        settings = self.notification_settings.get(str(chat_id), {})
+        enabled = sum(1 for value in settings.values() if bool(value))
+        total = len(settings)
+        pending = len(getattr(self.cardinal, "pending_orders", {}) or {})
+        confirmed = len(getattr(self.cardinal, "confirmed_orders", {}) or {})
+        text = (
+            f"🔔 <b>{_('notification_digest_title')}</b>\n\n"
+            f"Чат: <code>{chat_id}</code>\n"
+            f"Включено уведомлений: <code>{enabled}/{total or '—'}</code>\n"
+            f"Подключённых чатов: <code>{len(self.notification_settings)}</code>\n"
+            f"Неподтверждённых заказов: <code>{pending}</code>\n"
+            f"Заказов без отзыва: <code>{confirmed}</code>\n\n"
+            f"{_('notification_digest_hint')}"
+        )
+        keyboard = (K()
+                    .row(B("⚙️ Настроить уведомления", callback_data=f"{CBT.CATEGORY}:tg"),
+                         B("📊 Дашборд", callback_data=CBT.DASHBOARD))
+                    .add(B("◀️ Меню", callback_data=CBT.MAIN3)))
+        return text, keyboard
+
+    def send_notification_digest(self, m: Message):
+        text, keyboard = self._notification_digest_payload(m.chat.id)
+        self.bot.send_message(m.chat.id, text, reply_markup=keyboard)
+
+    def open_notification_digest(self, c: CallbackQuery):
+        self.bot.answer_callback_query(c.id)
+        text, keyboard = self._notification_digest_payload(c.message.chat.id)
+        try:
+            self.bot.edit_message_text(text, c.message.chat.id, c.message.id, reply_markup=keyboard)
+        except Exception:
+            self.bot.send_message(c.message.chat.id, text, reply_markup=keyboard)
 
     def check_updates(self, m: Message):
         curr_tag = f"v{self.cardinal.VERSION}"
@@ -2159,6 +2474,10 @@ class TGBot:
         self.msg_handler(self.about, commands=["about"])
         self.msg_handler(self.send_activity, commands=["activity"])
         self.cbq_handler(self.refresh_activity, lambda c: c.data == CBT.ACTIVITY_REFRESH)
+        self.msg_handler(self.send_dashboard, commands=["dashboard", "status"])
+        self.msg_handler(self.send_sales, commands=["sales", "orders"])
+        self.msg_handler(self.send_lot_health, commands=["lot_health", "lot_status"])
+        self.msg_handler(self.send_notification_digest, commands=["notification_digest", "digest"])
         self.msg_handler(self.check_updates, commands=["check_updates"])
         self.msg_handler(self.update, commands=["update"])
         self.msg_handler(self.get_backup, commands=["get_backup"])
@@ -2191,6 +2510,13 @@ class TGBot:
         self.cbq_handler(self.empty_callback, lambda c: c.data == CBT.EMPTY)
         self.cbq_handler(self.switch_lang, lambda c: c.data.startswith(f"{CBT.LANG}:"))
         self.cbq_handler(self.confirm_update_handler, lambda c: c.data.startswith("update:"))
+        self.cbq_handler(self.refresh_dashboard, lambda c: c.data == CBT.DASHBOARD_REFRESH)
+        self.cbq_handler(self.open_dashboard, lambda c: c.data == CBT.DASHBOARD)
+        self.cbq_handler(self.open_sales, lambda c: c.data in (CBT.SALES, CBT.SALES_REFRESH))
+        self.cbq_handler(self.copy_order_id, lambda c: c.data.startswith(f"{CBT.COPY_ORDER_ID}:"))
+        self.cbq_handler(self.open_lot_health, lambda c: c.data == CBT.LOT_HEALTH)
+        self.cbq_handler(self.refresh_lot_health, lambda c: c.data == CBT.LOT_HEALTH_REFRESH)
+        self.cbq_handler(self.open_notification_digest, lambda c: c.data == CBT.NOTIFICATION_DIGEST)
 
     def send_notification(self, text: str | None, keyboard: K | None = None,
                           notification_type: str = utils.NotificationTypes.other, photo: bytes | None = None,

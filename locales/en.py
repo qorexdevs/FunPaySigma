@@ -507,6 +507,40 @@ cmd_upload_backup = "upload backup"
 cmd_restart = "restart FPS"
 cmd_power_off = "shutdown FPS"
 cmd_activity = "Sigma Activity"
+cmd_dashboard = "FunPay operations dashboard"
+cmd_sales = "Latest FunPay sales"
+cmd_lot_health = "Lot health check"
+cmd_notification_digest = "Notification digest"
+
+mm_dashboard = "📊 Dashboard"
+mm_sales = "🛒 Sales"
+mm_lot_health = "📦 Lot health"
+mm_notification_digest = "🔔 Digest"
+
+dashboard_title = "FunPay Sigma operations dashboard"
+dashboard_runtime = "Uptime"
+dashboard_version = "Version"
+dashboard_resources = "Resources"
+dashboard_account = "Account"
+dashboard_session = "FunPay session"
+dashboard_balance = "Available balance"
+dashboard_orders = "Active orders"
+dashboard_lots = "Lots"
+dashboard_autodelivery = "Auto delivery"
+dashboard_plugins = "Plugins"
+dashboard_chats = "Notification chats"
+dashboard_error = "❌ Could not build the dashboard. Check logs and FunPay authorization."
+
+sales_title = "Latest FunPay sales"
+sales_empty = "📭 No sales yet or the list is temporarily unavailable."
+sales_more = "More orders in the list: <code>{}</code>"
+sales_error = "❌ Could not load sales. Check the golden key and FunPay connection."
+
+lot_health_title = "Lot health"
+lot_health_hint = "Use the button above to refresh the profile. This check does not modify auto-delivery settings or stock files."
+
+notification_digest_title = "Notification and queue digest"
+notification_digest_hint = "Open notification settings to toggle categories without restarting Sigma."
 
 activity_info = """📊 <b>FunPay Sigma — Status</b>
 

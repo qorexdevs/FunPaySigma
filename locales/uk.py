@@ -509,6 +509,40 @@ cmd_upload_backup = "вивантажити бекап"
 cmd_restart = "перезапустити FPS"
 cmd_power_off = "вимкнути FPS"
 cmd_activity = "Активність Sigma"
+cmd_dashboard = "Операційний дашборд FunPay"
+cmd_sales = "Останні продажі FunPay"
+cmd_lot_health = "Перевірка стану лотів"
+cmd_notification_digest = "Дайджест сповіщень"
+
+mm_dashboard = "📊 Дашборд"
+mm_sales = "🛒 Продажі"
+mm_lot_health = "📦 Стан лотів"
+mm_notification_digest = "🔔 Дайджест"
+
+dashboard_title = "Операційний дашборд FunPay Sigma"
+dashboard_runtime = "Аптайм"
+dashboard_version = "Версія"
+dashboard_resources = "Ресурси"
+dashboard_account = "Обліковий запис"
+dashboard_session = "Сесія FunPay"
+dashboard_balance = "Доступний баланс"
+dashboard_orders = "Активні замовлення"
+dashboard_lots = "Лоти"
+dashboard_autodelivery = "Автовидача"
+dashboard_plugins = "Плагіни"
+dashboard_chats = "Чати сповіщень"
+dashboard_error = "❌ Не вдалося побудувати дашборд. Перевірте логи й авторизацію FunPay."
+
+sales_title = "Останні продажі FunPay"
+sales_empty = "📭 Продажів поки немає або список тимчасово недоступний."
+sales_more = "Ще замовлень у списку: <code>{}</code>"
+sales_error = "❌ Не вдалося отримати продажі. Перевірте golden key і з’єднання з FunPay."
+
+lot_health_title = "Стан лотів"
+lot_health_hint = "Профіль можна оновити кнопкою вище. Перевірка не змінює налаштування автовидачі та файли складів."
+
+notification_digest_title = "Дайджест сповіщень і черг"
+notification_digest_hint = "У налаштуваннях сповіщень можна перемикати категорії без перезапуску Sigma."
 
 activity_info = """📊 <b>FunPay Sigma — Статус</b>
 

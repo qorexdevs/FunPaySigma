@@ -3,7 +3,7 @@
 # ⚡ FunPay Sigma
 
 [![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![Version](https://img.shields.io/badge/Версия-2.13.1-4FC3F7?style=for-the-badge)](https://github.com/qorexdevs/FunPaySigma/releases)
+[![Version](https://img.shields.io/badge/Версия-2.14.0-4FC3F7?style=for-the-badge)](https://github.com/qorexdevs/FunPaySigma/releases)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 [![Telegram](https://img.shields.io/badge/Telegram-Чат-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/FunPaySigmaChat)
 [![Plugins](https://img.shields.io/badge/Плагины-Каталог-orange?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/fps_plugins)
@@ -22,6 +22,8 @@
 - [✨ О проекте](#-о-проекте)
 - [🤖 Функционал](#-функционал)
 - [📊 Встроенные модули](#-встроенные-модули)
+- [📲 Telegram API и операционные экраны](#-telegram-api-и-операционные-экраны)
+- [📝 История изменений](CHANGELOG.md)
 - [🧩 Система плагинов](#-система-плагинов)
 - [🏆 Почему FunPay Sigma?](#-почему-funpay-sigma)
 - [📥 Установка и запуск](#-установка-и-запуск)
@@ -87,6 +89,31 @@
 - 🌐 Управление прокси
 - 📁 Загрузка и скачивание конфигов
 - **💰 Вывод средств**
+
+**Новые операционные инструменты Sigma 2.14:**
+- 📊 **Дашборд** — версия, аптайм, авторизация FunPay, доступный баланс, активные заказы, лоты, плагины, прокси и нагрузка процесса в одном редактируемом сообщении.
+- 🛒 **Продажи** — последние заказы с покупателем, статусом, ценой, датой, ссылкой FunPay и кнопкой копирования ID (`copy_text` на новых версиях Telegram, callback fallback на старых).
+- 📦 **Здоровье лотов** — активные/неактивные лоты, покрытие автовыдачей, склады и сиротские секции конфигурации.
+- 🔔 **Дайджест** — состояние Telegram-уведомлений, очередей напоминаний и заказов без отзыва.
+- 🔄 Все новые экраны используют inline-обновление и мгновенный `answerCallbackQuery`, поэтому чат не заполняется сообщениями при навигации.
+
+Команды: `/dashboard` (`/status`), `/sales` (`/orders`), `/lot_health` (`/lot_status`),
+`/notification_digest` (`/digest`).
+
+Подробное дерево меню, правила callback-совместимости и ссылки на официальный
+Bot API: [docs/TELEGRAM.md](docs/TELEGRAM.md).
+
+## 📲 Telegram API и операционные экраны
+
+Sigma 2.14 ориентируется на стабильные возможности Bot API: inline-клавиатуры,
+редактирование сообщений, мгновенный `answerCallbackQuery`, URL-кнопки и
+`copy_text` с fallback для старых версий `pytelegrambotapi`. Новые Rich Messages,
+guest mode и managed bots не включены без прикладного сценария для FunPay — это
+сохраняет совместимость с существующими установками и Cardinal-плагинами.
+
+Актуальные ссылки Telegram: [Bot API changelog](https://core.telegram.org/bots/api-changelog),
+[Bot API](https://core.telegram.org/bots/api), [inline keyboards](https://core.telegram.org/bots/features#inline-keyboards)
+и [Mini Apps](https://core.telegram.org/bots/webapps).
 
 ---
 

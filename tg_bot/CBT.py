@@ -287,3 +287,14 @@ BULK_LOTS_DEACTIVATE = "142"
 TOGGLE_DISCOUNT = "143"
 CANCEL_DISCOUNT = "144"
 CANCEL_ALL_DISCOUNTS = "145"
+
+# Новые callback-пространства Sigma 2.14. Старые числовые значения не меняются:
+# плагины Cardinal и сохранённые inline-клавиатуры продолжают работать.
+DASHBOARD = "sigma.dashboard"
+DASHBOARD_REFRESH = "sigma.dashboard.refresh"
+SALES = "sigma.sales"
+SALES_REFRESH = "sigma.sales.refresh"
+COPY_ORDER_ID = "sigma.sales.copy"
+LOT_HEALTH = "sigma.lot_health"
+LOT_HEALTH_REFRESH = "sigma.lot_health.refresh"
+NOTIFICATION_DIGEST = "sigma.notifications.digest"
