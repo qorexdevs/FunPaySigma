@@ -511,11 +511,42 @@ cmd_dashboard = "FunPay operations dashboard"
 cmd_sales = "Latest FunPay sales"
 cmd_lot_health = "Lot health check"
 cmd_notification_digest = "Notification digest"
+cmd_telegram_proxy = "Telegram Bot API proxy"
 
 mm_dashboard = "📊 Dashboard"
 mm_sales = "🛒 Sales"
 mm_lot_health = "📦 Lot health"
 mm_notification_digest = "🔔 Digest"
+mm_telegram_proxy = "📡 Telegram proxy"
+
+tg_proxy_info = """📡 <b>Telegram Bot API proxy</b>
+
+Status: <b>{}</b>
+Proxy: <code>{}</code>
+
+This proxy is used only by the Telegram bot and does not change the FunPay proxy. HTTP(S), SOCKS5 and SOCKS5H are supported."""
+tg_proxy_enabled = "✅ enabled"
+tg_proxy_direct = "🌐 direct connection"
+tg_proxy_set = "✏️ Set / change"
+tg_proxy_test = "🧪 Test"
+tg_proxy_disable = "🚫 Disable"
+tg_proxy_enter = """📡 <b>Send a proxy for Telegram</b>
+
+Formats:
+<code>http://login:password@ip:port</code>
+<code>socks5://ip:port</code>
+<code>socks5h://login:password@ip:port</code>
+
+The proxy will be checked with a real <code>getMe</code> request before saving."""
+tg_proxy_checking = "⏳ Checking Telegram access through the proxy…"
+tg_proxy_checking_short = "Checking proxy…"
+tg_proxy_invalid = "❌ Invalid proxy: <code>{}</code>"
+tg_proxy_invalid_config = "invalid value in config"
+tg_proxy_check_failed = "❌ Telegram is unavailable through this proxy:\n<code>{}</code>"
+tg_proxy_saved = "✅ Telegram proxy saved and applied. Connection: <code>{}</code>"
+tg_proxy_disabled = "✅ Telegram proxy disabled. The bot now uses a direct connection."
+tg_proxy_not_set = "Telegram proxy is not configured."
+tg_proxy_test_ok = "✅ Telegram proxy works. Connection: <code>{}</code>"
 
 dashboard_title = "FunPay Sigma operations dashboard"
 dashboard_runtime = "Uptime"

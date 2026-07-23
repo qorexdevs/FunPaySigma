@@ -24,6 +24,8 @@ import logging
 from telebot.types import InlineKeyboardMarkup as K, InlineKeyboardButton as B, Message, CallbackQuery, BotCommand,    InputFile
 from tg_bot import utils, static_keyboards as skb, keyboards as kb, CBT
 from Utils import cardinal_tools, updater
+from Utils.telegram_proxy import (mask_telegram_proxy, normalize_telegram_proxy,
+                                  telegram_proxy_mapping)
 from locales.localizer import Localizer
 
 logger = logging.getLogger("TGBot")
@@ -34,6 +36,13 @@ telebot.apihelper.ENABLE_MIDDLEWARE = True
 class TGBot:
     def __init__(self, cardinal: Cardinal):
         self.cardinal = cardinal
+
+        self.telegram_proxy = ""
+        try:
+            self.apply_telegram_proxy(self.cardinal.MAIN_CFG["Telegram"].get("proxy", ""))
+        except ValueError as error:
+            telebot.apihelper.proxy = None
+            logger.error("Некорректный Telegram-прокси в конфиге: %s", error)
 
         self.bot = telebot.TeleBot(self.cardinal.MAIN_CFG["Telegram"]["token"], parse_mode="HTML",
                                    allow_sending_without_reply=True, num_threads=2)
@@ -82,11 +91,22 @@ class TGBot:
             "sales": "cmd_sales",
             "lot_health": "cmd_lot_health",
             "notification_digest": "cmd_notification_digest",
+            "telegram_proxy": "cmd_telegram_proxy",
         }
         self.__default_notification_settings = {
             utils.NotificationTypes.ad: 1,
             utils.NotificationTypes.announcement: 1
         }
+
+    def apply_telegram_proxy(self, proxy: str | None) -> str:
+        normalized = normalize_telegram_proxy(proxy)
+        telebot.apihelper.proxy = telegram_proxy_mapping(normalized)
+        self.telegram_proxy = normalized
+        if normalized:
+            logger.info("Telegram Bot API использует прокси %s", mask_telegram_proxy(normalized))
+        else:
+            logger.info("Telegram Bot API использует прямое подключение")
+        return normalized
 
     def get_state(self, chat_id: int, user_id: int) -> dict | None:
 

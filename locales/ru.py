@@ -662,11 +662,42 @@ cmd_dashboard = "Операционный дашборд FunPay"
 cmd_sales = "Последние продажи FunPay"
 cmd_lot_health = "Проверка состояния лотов"
 cmd_notification_digest = "Дайджест уведомлений"
+cmd_telegram_proxy = "Прокси для Telegram Bot API"
 
 mm_dashboard = "📊 Дашборд"
 mm_sales = "🛒 Продажи"
 mm_lot_health = "📦 Здоровье лотов"
 mm_notification_digest = "🔔 Дайджест"
+mm_telegram_proxy = "📡 Telegram-прокси"
+
+tg_proxy_info = """📡 <b>Прокси Telegram Bot API</b>
+
+Статус: <b>{}</b>
+Прокси: <code>{}</code>
+
+Этот прокси используется только Telegram-ботом и не меняет прокси FunPay. Поддерживаются HTTP(S), SOCKS5 и SOCKS5H."""
+tg_proxy_enabled = "✅ включён"
+tg_proxy_direct = "🌐 прямое подключение"
+tg_proxy_set = "✏️ Установить / сменить"
+tg_proxy_test = "🧪 Проверить"
+tg_proxy_disable = "🚫 Отключить"
+tg_proxy_enter = """📡 <b>Отправь прокси для Telegram</b>
+
+Форматы:
+<code>http://login:password@ip:port</code>
+<code>socks5://ip:port</code>
+<code>socks5h://login:password@ip:port</code>
+
+Прокси будет проверен реальным запросом <code>getMe</code> до сохранения."""
+tg_proxy_checking = "⏳ Проверяю доступ к Telegram через прокси…"
+tg_proxy_checking_short = "Проверяю прокси…"
+tg_proxy_invalid = "❌ Некорректный прокси: <code>{}</code>"
+tg_proxy_invalid_config = "некорректное значение в конфиге"
+tg_proxy_check_failed = "❌ Telegram недоступен через этот прокси:\n<code>{}</code>"
+tg_proxy_saved = "✅ Telegram-прокси сохранён и применён. Подключение: <code>{}</code>"
+tg_proxy_disabled = "✅ Telegram-прокси отключён. Бот переключён на прямое подключение."
+tg_proxy_not_set = "Telegram-прокси не задан."
+tg_proxy_test_ok = "✅ Telegram-прокси работает. Подключение: <code>{}</code>"
 
 dashboard_title = "Операционный дашборд FunPay Sigma"
 dashboard_runtime = "Аптайм"

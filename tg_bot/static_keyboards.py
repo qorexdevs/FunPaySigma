@@ -44,6 +44,7 @@ def SETTINGS_SECTIONS_3() -> K:
                  B(_("mm_sales"), callback_data=CBT.SALES))
             .row(B(_("mm_lot_health"), callback_data=CBT.LOT_HEALTH),
                  B(_("mm_notification_digest"), callback_data=CBT.NOTIFICATION_DIGEST))
+            .row(B(_("mm_telegram_proxy"), callback_data=CBT.TELEGRAM_PROXY))
             .add(B(_("gl_back"), callback_data=CBT.MAIN2)))
 
 def AR_SETTINGS() -> K:

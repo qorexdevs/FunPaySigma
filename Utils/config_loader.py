@@ -42,7 +42,7 @@ def convert_cardinal_to_sigma(config_path: str, output_path: str = None) -> Conf
 
     sensitive_fields = {
         'FunPay': ['golden_key'],
-        'Telegram': ['token'],
+        'Telegram': ['token', 'proxy'],
         'Proxy': ['login', 'password', 'ip', 'port']
     }
 
@@ -155,7 +155,8 @@ def load_main_config(config_path: str):
             "enabled": ["0", "1"],
             "token": "any+empty",
             "secretKeyHash": "any",
-            "blockLogin": ["0", "1"]
+            "blockLogin": ["0", "1"],
+            "proxy": "any+empty"
         },
 
         "BlockList": {
@@ -278,6 +279,9 @@ def load_main_config(config_path: str):
             elif section_name == "Telegram" and param_name == "blockLogin" and                    param_name not in config[section_name]:
                 config.set("Telegram", "blockLogin", "0")
                 save_config(config, "configs/_main.cfg", encrypt_sensitive=False)
+            elif section_name == "Telegram" and param_name == "proxy" and                    param_name not in config[section_name]:
+                config.set("Telegram", "proxy", "")
+                save_config(config, "configs/_main.cfg", encrypt_sensitive=False)
             elif section_name == "Telegram" and param_name == "secretKeyHash" and                    param_name not in config[section_name]:
                 config.set(section_name, "secretKeyHash", hash_password(config[section_name]["secretKey"]))
                 config.remove_option(section_name, "secretKey")
@@ -350,12 +354,15 @@ def load_main_config(config_path: str):
         elif encrypted_key.startswith("b64:"):
             config.set("FunPay", "golden_key", deobfuscate_data(encrypted_key[4:]))
 
-    if config.has_section("Telegram") and config.has_option("Telegram", "token"):
-        encrypted_token = config["Telegram"]["token"]
-        if encrypted_token.startswith("enc:"):
-            config.set("Telegram", "token", decrypt_data(encrypted_token[4:]))
-        elif encrypted_token.startswith("b64:"):
-            config.set("Telegram", "token", deobfuscate_data(encrypted_token[4:]))
+    if config.has_section("Telegram"):
+        for field in ["token", "proxy"]:
+            if not config.has_option("Telegram", field):
+                continue
+            encrypted_value = config["Telegram"][field]
+            if encrypted_value.startswith("enc:"):
+                config.set("Telegram", field, decrypt_data(encrypted_value[4:]))
+            elif encrypted_value.startswith("b64:"):
+                config.set("Telegram", field, deobfuscate_data(encrypted_value[4:]))
 
     if config.has_section("Proxy"):
         for field in ["login", "password", "ip", "port"]:
@@ -374,7 +381,7 @@ def save_config(config: ConfigParser, config_path: str, encrypt_sensitive: bool 
         config_to_save = copy.deepcopy(config)
         sensitive_fields = {
             'FunPay': ['golden_key'],
-            'Telegram': ['token'],
+            'Telegram': ['token', 'proxy'],
             'Proxy': ['login', 'password', 'ip', 'port']
         }
 

@@ -3,7 +3,9 @@ from configparser import ConfigParser
 import time
 import telebot
 from colorama import Fore, Style
-from Utils.cardinal_tools import build_proxy, check_proxy, validate_proxy, hash_password, obfuscate_data
+from Utils.cardinal_tools import check_proxy, validate_proxy, hash_password, obfuscate_data
+from Utils.telegram_proxy import (check_telegram_proxy, mask_telegram_proxy,
+                                  normalize_telegram_proxy, telegram_proxy_mapping)
 
 default_config = {
     "FunPay": {
@@ -22,7 +24,8 @@ default_config = {
         "enabled": "0",
         "token": "",
         "secretKeyHash": "ХешСекретногоПароля",
-        "blockLogin": "0"
+        "blockLogin": "0",
+        "proxy": ""
     },
 
     "BlockList": {
@@ -76,6 +79,7 @@ default_config = {
         "port": "",
         "login": "",
         "password": "",
+        "type": "HTTP",
         "check": "0"
     },
 
@@ -136,28 +140,38 @@ def input_proxy(set_telebot_proxy: bool = False) -> str | None:
                 telebot.apihelper.proxy = None
             return None
         try:
-            scheme, login, password, ip, port = validate_proxy(proxy_input)
-            proxy = build_proxy(scheme, login, password, ip, port)
+            proxy = normalize_telegram_proxy(proxy_input)
             if not check_proxy({"http": proxy, "https": proxy}):
                 print("\nНевалидный прокси. Попробуй еще раз!")
                 continue
             if set_telebot_proxy:
-                telebot.apihelper.proxy = {"http": proxy, "https": proxy}
+                telebot.apihelper.proxy = telegram_proxy_mapping(proxy)
             return proxy
         except Exception as exc:
             print(f"\nНеверный формат прокси: {exc}. Попробуй еще раз!")
 
 
 def setup_telegram_proxy():
-    """Сохраняет Cardinal-совместимую настройку прокси Telegram."""
-    config = ConfigParser()
-    config.read("configs/_main.cfg", encoding="utf-8")
-    proxy = input_proxy(set_telebot_proxy=True)
-    if "Telegram" not in config:
-        config.add_section("Telegram")
-    config.set("Telegram", "proxy", proxy or "")
-    with open("configs/_main.cfg", "w", encoding="utf-8") as f:
-        config.write(f)
+    """Проверяет и сохраняет прокси Telegram в существующем конфиге."""
+    from Utils.config_loader import load_main_config, save_config
+
+    config = load_main_config("configs/_main.cfg")
+    current = config["Telegram"].get("proxy", "")
+    print(f"\nТекущий Telegram-прокси: {mask_telegram_proxy(current)}")
+    print("Укажи новый proxy URL или нажми Enter, чтобы отключить Telegram-прокси.")
+
+    while True:
+        proxy = input_proxy(set_telebot_proxy=True)
+        if proxy:
+            success, details = check_telegram_proxy(proxy, config["Telegram"]["token"])
+            if not success:
+                print(f"\nНе удалось подключиться к Telegram через этот прокси: {details}")
+                continue
+            print(f"\nПодключение к Telegram успешно: {details}")
+        config.set("Telegram", "proxy", proxy or "")
+        save_config(config, "configs/_main.cfg")
+        print("Telegram-прокси сохранён. Перезапусти Sigma для гарантированного применения.")
+        return
 
 def first_setup():
     config = create_config_obj(default_config)
@@ -195,6 +209,14 @@ def first_setup():
         if user_agent:
             config.set("FunPay", "user_agent", user_agent)
         break
+
+    print(f"\n{Fore.MAGENTA}{Style.BRIGHT}┌── {Fore.CYAN}"
+          f"Если Telegram недоступен напрямую, укажи отдельный прокси для Telegram Bot API. "
+          f"Форматы: http://login:password@ip:port, socks5://ip:port или socks5h://ip:port. "
+          f"Чтобы подключаться напрямую, просто нажми Enter. {Fore.RED}(* ^ ω ^){Style.RESET_ALL}")
+    telegram_proxy = input_proxy(set_telebot_proxy=True)
+    if telegram_proxy:
+        config.set("Telegram", "proxy", f"b64:{obfuscate_data(telegram_proxy)}")
 
     while True:
         print(
